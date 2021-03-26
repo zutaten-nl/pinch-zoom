@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DEMO Pinch Zoom Instagram Style</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimal-ui">
+    <style>
+        .container {
+            background: black;
+            position: relative;
+            touch-action: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .element {
+            touch-action: auto;
+            will-change: transform;
+            width: 720px;
+            height: 50vh;
+            max-width: 100%;
+            background: linear-gradient(to right bottom, red, blue, purple, yellow);
+        }
+    </style>
+</head>
+<body>
+
+<pinch-zoom class="container">
+    <div class="element"></div>
+</pinch-zoom>
+
+<script>
+  customElements.define('pinch-zoom', class extends HTMLElement {
+    constructor() {
+      super();
+      this.start = {};
+    }
+
+    distance(e) {
+      return Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+    };
+
+    connectedCallback() {
+      this.el = this.querySelector('.element');
+
+      this.el.addEventListener('touchstart', e => {
+        if (e.touches.length === 2) {
+          e.preventDefault();
+          this.start.x = (e.touches[0].pageX + e.touches[1].pageX) / 2;
+          this.start.y = (e.touches[0].pageY + e.touches[1].pageY) / 2;
+          this.start.distance = this.distance(e);
+        }
+      });
+
+      this.el.addEventListener('touchmove', e => {
+        if (e.touches.length !== 2) {
+          return;
+        }
+        const scale = this.distance(e) / this.start.distance;
+        const contentScale = Math.min(Math.max(1, scale), 4);
+        const deltaX = (((e.touches[0].pageX + e.touches[1].pageX) / 2) - this.start.x);
+        const deltaY = (((e.touches[0].pageY + e.touches[1].pageY) / 2) - this.start.y);
+        if (contentScale > 1) {
+          const transform = `translate3d(${deltaX}px, ${deltaY}px, 0) scale(${contentScale})`;
+          this.el.style.transform = transform;
+          this.el.style.WebkitTransform = transform;
+          this.el.style.zIndex = '9999';
+        }
+      });
+
+      this.el.addEventListener('touchend', () => {
+        this.el.style.transform = '';
+        this.el.style.WebkitTransform = '';
+        this.el.style.zIndex = '';
+      });
+    }
+  });
+</script>
+</body>
+</html>
